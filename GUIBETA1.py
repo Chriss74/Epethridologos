@@ -11,6 +11,10 @@ from ttkbootstrap.dialogs import Messagebox
 import random
 import re
 import unicodedata
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.ticker as ticker
+from matplotlib.ticker import MaxNLocator
 
 root = tb.Window(themename="superhero")
 root.resizable(False,False)
@@ -18,12 +22,13 @@ root.title("Επετηριδολόγος")
 root.geometry('1900x1300')
 
 #Select File
-#Check txt file integrity a) check if txt, b) check length at least 500 lines long, no more than 2000 lines long c) if the schema of each line is name name date 
+#Check txt file integrity a) check if txt ok, b) check length at least 500 lines long, no more than 2000 lines long c) if the schema of each line is name name date 
 #Print all mistakes
 #Na diorthwsw to rank, na epilegetai mono an exw epileksei onoma
 #Na ftiaksw grafikh apeikonish twn apotelesmatwn me th roda px se n xronia tha ginei o y proedros
 #Na diorthwsw pws ksanafortwnei ta arxeia
 #Na dw ti tha svhnei otan pataw enter   
+#Na ftiaksw ta clear me vash th logikh
 
 
 #initial data
@@ -40,7 +45,6 @@ ksouList= [0,0,0,0] #user input array, max words 4Xyears, only ints min 0 max 10
 agelimit=[67, 65, 65, 65]
     # changing lists
 templist=[]
-ksou_onomata=[] #onomata
 ProedroiEfetwn=0 #onomata
 Efetes=0 #onomata
 ProedroiProtodikwn=0 #onomata
@@ -56,7 +60,7 @@ def select_file():
     if countList[0]==None or countList[1]==None or countList[2]==None:
         Messagebox.ok("Δεν έχετε εισάγει το πλήθος των θέσεων για κάθε βαθμό")
     else:
-        clearOpenFile()
+        reloadFile()
         global file_path
         file_path= filedialog.askopenfilename(title="Select a File", filetype=(('text files','*.txt'),('all files','*.*')))
         openFile(file_path)
@@ -67,8 +71,21 @@ def openFile (filepath):
     global Efetes
     global ProedroiProtodikwn
     global Prwtodikes
+    global data_array
     
-    clearOpenFile()
+    if countList[0]==None or countList[1]==None or countList[2]==None:
+        Messagebox.ok("Δεν έχετε εισάγει το πλήθος των θέσεων για κάθε βαθμό")
+        return
+    reloadFile()
+    data_array=[]
+    global ProedroiEfetwn
+    ProedroiEfetwn=0
+    global Efetes
+    Efetes=0
+    global ProedroiProtodikwn
+    ProedroiProtodikwn=0
+    global Prwtodikes
+    Prwtodikes=0
     fileName=re.search(r'[^/\\]+$', filepath).group()
     with open(filepath, 'r', encoding='utf-8') as file:
         for line_num, line in enumerate(file, start=1):
@@ -109,9 +126,6 @@ def openFile (filepath):
     add_content_to_tab(2, ProedroiProtodikwn)
     add_content_to_tab(3, Prwtodikes)
     file_label.config(text=fileName, bootstyle="success")
-    
-    
-    
     
   
 
@@ -176,7 +190,7 @@ def reload():
         Messagebox.ok("Δεν έχετε ήδη επιλεγμένο κάποιο έγκυρο αρχείο")
     
 def clearAll():
-    clearOpenFile()
+    reloadFile()
     global countList
     countList=[75, 268, 110]
     global file_path
@@ -200,9 +214,11 @@ def clearAll():
     global myrank
     myrank=0
     global name
-    name=None
+    name=[0,0]
     global years
     years=0 #optional if rank is chosen user input slider max 30
+    chose_name.config(values=[""])
+    chose_rank.set(ranks[0])
     clear_entry_value(chose_countrank_PE)
     clear_entry_value(chose_countrank_E)
     clear_entry_value(chose_countrank_PP)
@@ -222,7 +238,7 @@ def clearAll():
     clear_entry_value(chose_age_E)
     clear_entry_value(chose_age_PP)
     clear_entry_value(chose_age_P)
-    clear_entry_value(chose_name_entry)    
+    clear_entry_value(chose_name_entry)  
     year_slider.set(0)
     file_year_slider.set(cyear)   
     chose_age_PE.insert(0, "67")
@@ -241,7 +257,7 @@ def clear_entry_value(entry):
 #Otan anoigei kainourio arxeio, to file_path kanei update giati prwta trexei to select_file, opote kanei clearAll kai arxikopoiei to file_path kai meta trexei to openFile
 #Otan kanei reload trexei mono to openFile, kratwntas idia osa fainontai sthn othonh. Auta pou evale o xrhsths stiw listes ana xrono klp, allazoun
 
-def clearOpenFile():
+def reloadFile():
     global countList
     countList=countList[:3]
     delete_content_from_tab(nb)
@@ -256,19 +272,9 @@ def clearOpenFile():
     ksouList=ksouList[:4]
     global ksou_onomata
     ksou_onomata=[]
-    global ProedroiEfetwn
-    ProedroiEfetwn=0 #onomata
-    global Efetes
-    Efetes=0 #onomata
-    global ProedroiProtodikwn
-    ProedroiProtodikwn=0 #onomata
-    global Prwtodikes
     Prwtodikes=0 #onomata
-    global name
-    name=[0,0]
+    [button.destroy() for button in mainFrame4.winfo_children() if isinstance(button, ttk.Button)]
     infoLabel.config(text="")
-    chose_name.config(values=[""])
-    chose_name.current(0)
     chose_age_PE.config(state="normal")
     chose_age_E.config(state="normal")
     chose_age_PP.config(state="normal")
@@ -317,6 +323,7 @@ def chose_name_entry_bind(e):
             if mytext in myvalue:
                 chose_name.current(i)
                 break
+
 #####COUNTRANK####
 #rythmizei thn symperifora tou pediou gia thn eisagwgh tou arithmou twn thesewn ana vathmo
 def focusout_countrank(e):
@@ -481,7 +488,7 @@ def openNewWindowCountrank():
         tb.Label(sf,text="Εισάγεται τις θέσεις ανά βαθμό κατ' έτος (Πρόεδροι Εφετών, Εφέτες, Πρόεδροι Πρωτοδικών). Εάν παραλείψετε τη συμπλήρωση ορισμένων ετών, αυτά θα συμπληρωθούν από τo ακριβώς προηγούμενο συμπληρωμένο έτος", wraplength=400).pack()
         count_confirm_button = tb.Button(sf, text="Enter", command=lambda: confirmCountRank(sf)).pack(pady=20)
         
-        for i in range(years-1):
+        for i in range(years):
             etos=str(cyear+1+i)
             lb=tb.Label(sf,text=etos)
             lb.pack()
@@ -518,7 +525,7 @@ def openNewWindowKsou():
         tb.Label(sf,text="Εισάγεται τις θέσεις ανά βαθμό κατ' έτος (Πρόεδροι Εφετών, Εφέτες, Πρόεδροι Πρωτοδικών). Εάν παραλείψετε τη συμπλήρωση ορισμένων ετών, αυτά θα συμπληρωθούν από τo ακριβώς προηγούμενο συμπληρωμένο έτος", wraplength=400).pack()
         count_confirm_button = tb.Button(sf, text="Enter", command=lambda: confirmCountRank(sf)).pack(pady=20)
         
-        for i in range(years-1):
+        for i in range(years):
             etos=str(cyear+1+i)
             lb=tb.Label(sf,text=etos)
             lb.pack()
@@ -545,6 +552,7 @@ def openNewWindowKsou():
     else:
         Messagebox.ok("Πρέπει να συμπληρώσετε πρώτα όλα τα αρχικά πεδία για το πλήθος σε κάθε βαθμό")
 
+    
 def openNewWindowAge():
     if agelimit[0] and agelimit[1] and agelimit[2] and agelimit[3]:
         newWindow = Toplevel(root)
@@ -555,7 +563,7 @@ def openNewWindowAge():
         tb.Label(sfAge,text="Εισάγεται τα όρια ηλικίας συνταξιοδότησης για κάθε βαθμό (Πρόεδροι Εφετών, Εφέτες, Πρόεδροι Πρωτοδικών). Εάν παραλείψετε τη συμπλήρωση ορισμένων ετών, αυτά θα συμπληρωθούν από τo ακριβώς προηγούμενο συμπληρωμένο έτος", wraplength=400).pack()
         count_confirm_button = tb.Button(sfAge, text="Enter", command=lambda: confirmAge(sfAge)).pack(pady=20)
         
-        for i in range(years-1):
+        for i in range(years):
             etos=str(cyear+1+i)
             lb=tb.Label(sfAge,text=etos)
             lb.pack()
@@ -590,8 +598,97 @@ def openNewWindowAge():
         newWindow.grab_set()
     else:
         Messagebox.ok("Πρέπει να συμπληρώσετε πρώτα όλα τα αρχικά πεδία για το όριο ηλικίας σε κάθε βαθμό")
+
+def designGraph(yearCountList, PEDataRet, PEDataRand, EDataRet, EDataRand, PPDataRet, PPDataRand): 
+    if 1: 
+    #yearCountList and PEData and EData and PPData:
+        newWindow = tk.Toplevel(root)
+        newWindow.title("Graph Window")
+        newWindow.geometry("1000x1000")
+        newWindow.grab_set()
+
+
+        # Create a VerticalScrolledFrame to hold the graphs
+        sfGraph = ScrolledFrame(newWindow)
+        sfGraph.pack(fill=tk.BOTH, expand=tk.YES, padx=10, pady=10)
+
+        # Create a frame to hold the graphs within the scrolled frame
+        # frameGraph = tk.Frame(sfGraph)
+        # frameGraph.pack(fill=tk.BOTH, expand=tk.YES, padx=10, pady=10)
+
+        # Create and embed the first graph
+          # Create and embed the first graph with two lines
+       # Calculate the total number of years
+        num_years = len(yearCountList)
+
+        # Create a figure and axes for PEData
+        fig1, ax1 = plt.subplots(figsize=(10, 6))
+
+        # Create a list of indices for the x-axis
+        x_indices = list(range(num_years))
+
+        # Create a stacked bar plot for PEData
+        ax1.bar(x_indices, PEDataRet, label='Ηλικίας', color='red', alpha=0.5)
+        ax1.bar(x_indices, PEDataRand, label='Τυχαία', color='blue', alpha=0.5, bottom=PEDataRet)
+
+        # Set x-axis labels to be the years
+        ax1.set_xticks(x_indices)
+        # ax1.set_xticklabels(yearCountList)
+        custom_labels = [str(yearCountList[i]) if i % 2 == 0 else '' for i in x_indices]
+        ax1.set_xticklabels(custom_labels, fontsize=10)  # Adjust the font size (e.g., 10)
+        ax1.set_xlabel("Έτος")
+        ax1.set_ylabel("Αποχωρήσεις")
+        ax1.set_title('Πρόεδροι Εφετών')
+        ax1.legend()
+
+        # Embed the PEData plot in the frame
+        canvas1 = FigureCanvasTkAgg(fig1, master=sfGraph)
+        canvas1.get_tk_widget().pack(padx=10, pady=10)
+
+        # Create a figure and axes for EData
+        fig2, ax2 = plt.subplots(figsize=(10, 6))
+
+        # Create a stacked bar plot for EData
+        ax2.bar(x_indices, EDataRet, label='Ηλικίας', color='red', alpha=0.5)
+        ax2.bar(x_indices, EDataRand, label='Τυχαία', color='blue', alpha=0.5, bottom=EDataRet)
+
+        # Set x-axis labels to be the years
+        ax2.set_xticks(x_indices)
+        custom_labels = [str(yearCountList[i]) if i % 5 == 0 else '' for i in x_indices]
+        ax2.set_xticklabels(custom_labels, fontsize=10)  # Adjust the font size (e.g., 10)
+        ax2.set_xlabel("Έτος")
+        ax2.set_ylabel("Αποχωρήσεις")
+        ax2.set_title('Εφέτες')
+        ax2.legend()
+
+        # Embed the EData plot in the frame
+        canvas2 = FigureCanvasTkAgg(fig2, master=sfGraph)
+        canvas2.get_tk_widget().pack(padx=10, pady=10)
+
+        # Create a figure and axes for PPData
+        fig3, ax3 = plt.subplots(figsize=(10, 6))
+
+        # Create a stacked bar plot for PPData
+        ax3.bar(x_indices, PPDataRet, label='Ηλικίας', color='red', alpha=0.5)
+        ax3.bar(x_indices, PPDataRand, label='Τυχαία', color='blue', alpha=0.5, bottom=PPDataRet)
+
+        # Set x-axis labels to be the years
+        ax3.set_xticks(x_indices)
+        custom_labels = [str(yearCountList[i]) if i % 2 == 0 else '' for i in x_indices]
+        ax1.set_xticklabels(custom_labels, fontsize=10)  # Adjust the font size (e.g., 10)
+        ax3.set_xlabel("Έτος")
+        ax3.set_ylabel("Αποχωρήσεις")
+        ax3.set_title('Πρόεδροι Πρωτοδικών')
+        ax3.legend()
+
+        # Embed the PPData plot in the frame
+        canvas3 = FigureCanvasTkAgg(fig3, master=sfGraph)
+        canvas3.get_tk_widget().pack(padx=10, pady=10)
         
 
+    else:
+        Messagebox.ok("error")
+    plt.close('all')
 #slider
 def slider(e):
     global years
@@ -656,7 +753,6 @@ def key_ksou(e):
     else:
         caller.config(bootstyle="success")
         
-############## Thelei diorthwma einai apla antigrafh apo thn countList
 def confirmKsou(parent):
     entry_widgets = list(parent.children.values())
     global ksouList
@@ -687,7 +783,7 @@ def openNewWindowKsou():
     tb.Label(sfKsou,text="Εισάγεται το πλήθος που θα αποχωρήσει εκτός ορίου ηλικίας, ανά βαθμό (Πρόεδροι Εφετών, Εφέτες, Πρωτοδίκες). Εάν παραλείψετε τη συμπλήρωση ορισμένων ετών, αυτά θα συμπληρωθούν από τo ακριβώς προηγούμενο συμπληρωμένο έτος", wraplength=400).pack()
     confirm_button_ksou = tb.Button(sfKsou, text="Enter", command=lambda: confirmKsou(sfKsou)).pack(pady=20)
     
-    for i in range(years-1):
+    for i in range(years):
         etos=str(cyear+1+i)
         lb=tb.Label(sfKsou,text=etos)
         lb.pack()
@@ -704,15 +800,17 @@ def openNewWindowKsou():
         en4.pack()
         en4.bind('<Control-v>', lambda _:'break')
 
-    newWindow.grab_set()
+    newWindowKsou.grab_set()
 
 #MAIN DEFS
 def loop(firstlist, year, ksoucount, age, name, rank):
     temp=[]
     temp2=[]
-    retirement=False #na to ftiaksw na spaei to loop
+    ksou_onomata=[] #onomata
+    retirementCount=0
+    randomCount=0
+    retirement=False #spaei to loop sto enter
     nameIndex=None
-    global ksou_onomata
  
     for index, x in enumerate(firstlist):
         if year-x[1]<age:
@@ -726,9 +824,11 @@ def loop(firstlist, year, ksoucount, age, name, rank):
             x.append(rank)
             x.append("'Οριο Ηλικίας")
             ksou_onomata.append(x)
+            retirementCount+=1
     #Meta tha elegxw thn ksoulist gia to onoma
     index=None
     add=0
+    unlucky=None
     if name:
         index = next((i for i, sublist in enumerate(temp) if sublist == name), None)
         add=1
@@ -736,8 +836,11 @@ def loop(firstlist, year, ksoucount, age, name, rank):
         ksoucount=len(temp)-1-add
     if ksoucount>0:
         lottery=random.sample(range(0, len(temp)), ksoucount)
-        while index in lottery:
+        if index==None:
             lottery=random.sample(range(0, len(temp)), ksoucount)
+        else:
+            while index in lottery:
+                lottery=random.sample(range(0, len(temp)), ksoucount)
         
         for y in lottery:
             unlucky=temp[y]
@@ -746,11 +849,15 @@ def loop(firstlist, year, ksoucount, age, name, rank):
             unlucky.append(rank)
             unlucky.append("random")
             ksou_onomata.append(unlucky)
-    if index and ksoucount:
+            randomCount+=1
+    if unlucky and ksoucount>0:
+        
         temp2 = [temp[i] for i in range(len(temp)) if i not in lottery]
+        
+        
     else:
         temp2=temp
-    return temp2, retirement, nameIndex
+    return temp2, retirement, nameIndex, [retirementCount, randomCount], ksou_onomata
 
 def sliceList(firstlist, pe, e, pp):
     PEList=[]
@@ -802,17 +909,15 @@ def combineList(PE, E, PP, P):
             finlist=None
             return finlist
 
-#Na valw th seira pou eixei sth lista
 
-def fill_plhrofories(textIndex,yearEnd, indexInRank, rankIndex):
-    print(textIndex)
+def fill_plhrofories(textIndex,yearEnd, indexInRank, rankIndex, yearCountList, PEDataRet, PEDataRand, EDataRet, EDataRand, PPDataRet, PPDataRand):
+    
     global ranks
     try:
         myrank=ranks[rankIndex]
     except:
         myrank=0
-    
-    infoLabel.config(text="")
+   
     FMIRankReached=f'Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Προαγωγή στο βαθμό "{myrank}" σε {yearEnd-cyear} έτη από το έτος της επετηρίδας δηλαδή το έτος {yearEnd}.\nΣειρά στον βαθμό: {indexInRank+1} \nHλικία: {yearEnd-name[1]}'
     FMSyntaksi=f"Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Συνταξιοδότησης σε {yearEnd-cyear} έτη από το έτος της επετηρίδας, δηλαδή το έτος {yearEnd} Βαθμός: {ranks[rankIndex]} \nΗλικία {yearEnd-name[1]}"
     FMEinaiHdh=f'Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Στην επετηρίδα του έτους {yearEnd} είχε ήδη τον βαθμό "{myrank}" και σειρά στο βαθμό {indexInRank+1} σύμφωνα με τα στοιχεία που δώσατε'
@@ -820,8 +925,12 @@ def fill_plhrofories(textIndex,yearEnd, indexInRank, rankIndex):
     FMName=f'Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Σε {yearEnd-cyear} έτη από το έτος της επετηρίδας {cyear} και σε ηλικία {yearEnd-name[1]} είχε τον βαθμό "{myrank}" και σειρά στον βαθμό αυτό {indexInRank+1}'
     Error="Error"
     arr=[FMIRankReached, FMSyntaksi, FMEinaiHdh, FMNoName, FMName, Error]
-    infoLabel.config(text=arr[textIndex])
-    
+    infoLabel.config(text=arr[textIndex])   
+    global graphButton
+    graphButton = ttk.Button(mainFrame4, text="Graph")
+    graphButton.pack(side="bottom", pady=15)
+    graphButton.config(command=lambda: designGraph(yearCountList, PEDataRet, PEDataRand, EDataRet, EDataRand, PPDataRet, PPDataRand))
+
     
 def enter():
     global countList
@@ -830,70 +939,109 @@ def enter():
     global templist
     global years
     global myrank
-
-    infoLabel.config(text="")
+    global name  
     templist=[]
     templist+=data_array
     
-    #Elegxoi
+    ksou_onomata_all=[] #onomata
+    #create graph. H temporary list pu gyrizei h loop exei th morfh listas me listes [[retirementcount randomCount]]
+    #Ara prepei na exw tis ekshs listes pou na metrane gia ta eth [2023,2024 klp] apoxwrhseis retirement kai random gia 1) PE, 2)E, 3)PP, 4)P
     
-    if name==None:
+    indexInRank=None
+    indexRank=None
+    yearsKsouCountList=[]
+    PERetCountList=[]
+    PERandCountList=[]
+    ERetCountList=[]
+    ERandCountList=[]
+    PPRetCountList=[]
+    PPRandCountList=[]
+    PRetCountList=[]
+    PRandCountList=[]
+    
+    #delete tabs and infoLabel
+    delete_content_from_tab(nb)
+    [button.destroy() for button in mainFrame4.winfo_children() if isinstance(button, ttk.Button)]
+    infoLabel.config(text="") 
+    
+    #Elegxoi
+    if name==[0,0]:
         myrank=0
-        chose_rank.current(0)
-        
+        chose_rank.set(ranks[0])
+    
+    #no file_path    
     if file_path=="":
         Messagebox.ok("Δεν έχει επιλέξει αρχείο")
         return
     
+    #0 years chosen by user
     if years==0:
+        
         if name in ProedroiEfetwn:
             indexInRank = next((i for i, sublist in enumerate(ProedroiEfetwn) if sublist == name), None)
-            fill_plhrofories(4, cyear, indexInRank, 1)
+            fill_plhrofories(4, cyear, indexInRank, 2, [0],[0],[0],[0],[0],[0],[0])
             return
         elif name in Efetes:
             indexInRank = next((i for i, sublist in enumerate(Efetes) if sublist == name), None)
-            fill_plhrofories(4, cyear, indexInRank, 2)
+            fill_plhrofories(4, cyear, indexInRank, 2, [0],[0],[0],[0],[0],[0],[0])
             return
         elif name in ProedroiProtodikwn:
             indexInRank = next((i for i, sublist in enumerate(ProedroiProtodikwn) if sublist == name), None)
-            print(indexInRank)
-            fill_plhrofories(4, cyear, indexInRank, 3)
+           
+            fill_plhrofories(4, cyear, indexInRank, 3, [0],[0],[0],[0],[0],[0],[0])
             return
         elif name in Prwtodikes:
             indexInRank = next((i for i, sublist in enumerate(Prwtodikes) if sublist == name), None)
-            fill_plhrofories(4, cyear, indexInRank, 4)
+            fill_plhrofories(4, cyear, indexInRank, 4,[0],[0],[0],[0],[0],[0],[0])
             return
         else:
+            print("Not Found")
             return
     
     
-    #a) 30 xronia ereyna agnowntas to user input b)tsek ean to onoma katexei hdh ton vathmo
+    #tsek ean to onoma katexei hdh ton vathmo
     
     if myrank==1 and name in ProedroiEfetwn:
+        openFile(file_path)
         indexInRank = next((i for i, sublist in enumerate(ProedroiEfetwn) if sublist == name), None)
-        fill_plhrofories(2, cyear, indexInRank, 1)
+        fill_plhrofories(2, cyear, indexInRank, 1, [0],[0],[0],[0],[0],[0],[0])
         return
     elif myrank==2 and name in Efetes:
+        openFile(file_path)
         indexInRank = next((i for i, sublist in enumerate(Efetes) if sublist == name), None)
-        fill_plhrofories(2, cyear, indexInRank, 2)
+        fill_plhrofories(2, cyear, indexInRank, 2, [0],[0],[0],[0],[0],[0],[0])
         return
     elif myrank==3 and name in ProedroiProtodikwn:
+        openFile(file_path)
         indexInRank = next((i for i, sublist in enumerate(ProedroiProtodikwn) if sublist == name), None)
-        fill_plhrofories(2, cyear, indexInRank, 3)
+        fill_plhrofories(2, cyear, indexInRank, 3, [0],[0],[0],[0],[0],[0],[0])
         return
     
-    delete_content_from_tab(nb)
-    for i in range(0,years+1):
-            #count
+    
+    
+    #sliced list
+    countPE=countList[0]
+    countE=countList[1]
+    countPP=countList[2]
+    allList=sliceList(templist,countPE, countE, countPP)
+    PEList=allList[0]
+    EList=allList[1]
+    PPList=allList[2]
+    PList=allList[3]
+    
+    #loop
+    for i in range(1,years+1):
+            yearsKsouCountList.append(cyear+i)
+        #count
             if len(countList)>3:
-                count=3*i
+                count=(3*i)
             else:
                 count=(i*3)%3
             countPE=countList[count]
             countE=countList[count+1]
             countPP=countList[count+2]
             
-            #ksou
+        #ksou
             if len(ksouList)>4:
                 rand=4*i
             else:
@@ -903,8 +1051,8 @@ def enter():
             ksouPP=ksouList[rand+2]
             ksouP=ksouList[rand+3]
             
-            #age
-            if len(countList)>4:
+        #age
+            if len(agelimit)>4:
                 age=4*i
             else:
                 age=(i*4)%4
@@ -913,14 +1061,8 @@ def enter():
             agePP=agelimit[age+2]
             ageP=agelimit[age+3]
             
-            #sliced list
-            allList=sliceList(templist,countPE, countE, countPP)
-            PEList=allList[0]
-            EList=allList[1]
-            PPList=allList[2]
-            PList=allList[3]
             
-            #loop
+        # main loop
             PEListAll=loop(PEList, cyear+i, ksouPE, agePE, name, "Πρόεδρος Εφετών")
             EListAll=loop(EList, cyear+i, ksouE, ageE, name, "Εφέτης")
             PPListAll=loop(PPList, cyear+i, ksouPP, agePP, name, "Πρόεδρος Πρωτοδικών")
@@ -932,9 +1074,48 @@ def enter():
             PList=PListAll[0]
             
             PERetire=PEListAll[1]
-            ERetire=PEListAll[1]
-            PPRetire=PEListAll[1]
-            myindex=0
+            ERetire=EListAll[1]
+            PPRetire=PPListAll[1]
+            myindex=0 
+            
+            for x in PEListAll[4]:
+                ksou_onomata_all.append(x)
+            for x in EListAll[4]:
+                ksou_onomata_all.append(x)
+            for x in PPListAll[4]:
+                ksou_onomata_all.append(x)
+            for x in PListAll[4]:
+                ksou_onomata_all.append(x)
+        
+        #Graph Data    
+            PERetCountList.append(PEListAll[3][0])
+            PERandCountList.append(PEListAll[3][1])
+            ERetCountList.append(EListAll[3][0])
+            ERandCountList.append(EListAll[3][1])
+            PPRetCountList.append(PPListAll[3][0])
+            PPRandCountList.append(PEListAll[3][1])
+            PRetCountList.append(PListAll[3][0])
+            PRandCountList.append(PListAll[3][1])
+               
+        #recreate templist
+            templist=[]
+            if PEList:
+                templist+=PEList
+            if EList:
+                templist+=EList
+            if PPList:
+                templist+=PPList
+            if PList:   
+                templist+=PList     
+                pe=countList[-3]
+            e=countList[-2]
+            pp=countList[-1]
+            allList=sliceList(templist,pe, e, pp)
+            PEList=allList[0]
+            EList=allList[1]
+            PPList=allList[2]
+            PList=allList[3]
+            
         #Elegxos an syntaksiodoththhke
             if PERetire:
                 myindex=1
@@ -950,20 +1131,22 @@ def enter():
                 add_content_to_tab(1, EList)
                 add_content_to_tab(2, PPList)
                 add_content_to_tab(3, PList)
-                add_content_to_ksou(4, ksou_onomata)
+                add_content_to_ksou(4, ksou_onomata_all)
                 templist=[]
-                fill_plhrofories(1, cyear+i, indexInRank, myindex)
-                return        
-            #Elegxos an exei hdh ftasei ston vathmo
+                fill_plhrofories(1, cyear+i, indexInRank, myindex, yearsKsouCountList, PERandCountList, ERetCountList, ERandCountList,PPRetCountList, PPRandCountList)
+                return 
+                 
+            
+        #Elegxos an exei hdh ftasei ston vathmo
             if myrank==1 and name in PEList:
                 add_content_to_tab(0, PEList)
                 add_content_to_tab(1, EList)
                 add_content_to_tab(2, PPList)
                 add_content_to_tab(3, PList)
-                add_content_to_ksou(4, ksou_onomata)
+                add_content_to_ksou(4, ksou_onomata_all)
                 templist=[]
                 indexInRank=next((i for i, sublist in enumerate(PEList) if sublist == name), None)
-                fill_plhrofories(0, cyear+i, indexInRank, 1)
+                fill_plhrofories(0, cyear+i, indexInRank, 1, yearsKsouCountList, PERetCountList, PERandCountList, ERetCountList, ERandCountList,PPRetCountList, PPRandCountList)
                 return
             if myrank==2 and name in EList:
                 
@@ -974,7 +1157,7 @@ def enter():
                 add_content_to_ksou(4, ksou_onomata)
                 templist=[]
                 indexInRank = next((i for i, sublist in enumerate(EList) if sublist == name), None)
-                fill_plhrofories(0, cyear+i, indexInRank, 2)
+                fill_plhrofories(0, cyear+i, indexInRank, 2, yearsKsouCountList, PERetCountList, PERandCountList, ERetCountList, ERandCountList,PPRetCountList, PPRandCountList)
                 return
             if myrank==3 and name in PPList:
                
@@ -985,62 +1168,51 @@ def enter():
                 add_content_to_ksou(4, ksou_onomata)
                 templist=[]
                 indexInRank = next((i for i, sublist in enumerate(PPList) if sublist == name), None)
-                fill_plhrofories(0, cyear+i, indexInRank, 3)
+                fill_plhrofories(0, cyear+i, indexInRank, 3, yearsKsouCountList, PERetCountList, PERandCountList, ERetCountList, ERandCountList,PPRetCountList, PPRandCountList)
                 return
-                
-            #recreate templist
-            templist=[]
-            if PEList:
-                templist+=PEList
-            if EList:
-                templist+=EList
-            if PPList:
-                templist+=PPList
-            if PList:   
-                templist+=PList
-            
+                      
 
-    pe=countList[-3]
-    e=countList[-2]
-    pp=countList[-1]
-    allList=sliceList(templist,pe, e, pp)
-    PEList=allList[0]
-    EList=allList[1]
-    PPList=allList[2]
-    PList=allList[3]
+    
     
     add_content_to_tab(0, PEList)
     add_content_to_tab(1, EList)
     add_content_to_tab(2, PPList)
     add_content_to_tab(3, PList)
-    add_content_to_ksou(4, ksou_onomata)
+    add_content_to_ksou(4, ksou_onomata_all)
     
-    templist=[]
-    rankFin=0
-    indexInRank=None
-    indexRank=None
-    curentRank=None
-
     
-#Telikos elegxos gia vathmo
+#Telikos elegxos 
     if name in PEList:
         indexInRank = next((i for i, sublist in enumerate(PEList) if sublist == name), None)
-        fill_plhrofories(4, cyear+i,indexInRank,1)
+        fill_plhrofories(4, cyear+i,indexInRank,1, yearsKsouCountList, PERandCountList, ERetCountList, ERandCountList,PPRetCountList, PPRandCountList)
     elif name in EList:
         indexInRank = next((i for i, sublist in enumerate(EList) if sublist == name), None)
         indexRank=2
     elif name in PPList:
         indexInRank = next((i for i, sublist in enumerate(PPList) if sublist == name), None)
         indeRank=3
-        print("found")
     elif name in PList:
         indexInRank = next((i for i, sublist in enumerate(PList) if sublist == name), None)
         indeRank=4
     if indexRank and indexInRank:
-        fill_plhrofories(4, cyear+i,indexInRank,indexRank)
+        fill_plhrofories(4,cyear+i,indexInRank,indexRank, yearsKsouCountList, PERetCountList, PERandCountList, ERetCountList, ERandCountList,PPRetCountList, PPRandCountList)
     else:
-        fill_plhrofories(3,cyear+i,0,0)
+        fill_plhrofories(3,cyear+i,0,0,yearsKsouCountList, PERetCountList,PERandCountList, ERetCountList, ERandCountList,PPRetCountList, PPRandCountList)
     
+#arxikopoihsh metavlhtwn, kalou kakou
+    templist=[]
+    ksou_onomata_all=[]
+    yearsKsouCountList=[]
+    PERetCountList=[]
+    PERandCountList=[]
+    ERetCountList=[]
+    ERandCountList=[]
+    PPRetCountList=[]
+    PPRandCountList=[]
+    PRetCountList=[]
+    PRandCountList=[]
+    indexInRank=None
+    indexRank=None
     
 
        
