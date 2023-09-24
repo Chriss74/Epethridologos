@@ -362,7 +362,7 @@ def confirmCountRank(parent):
     chose_countrank_PE.config(state="readonly")
     chose_countrank_E.config(state="readonly")
     chose_countrank_PP.config(state="readonly")
-    # year_slider.config(state="disabled")
+    # year_slider.config(state="disabled") mporei na htan kakh idea pou to evgala...
     file_year_slider.config(stat="disabled")
     entry_widgets = list(parent.children.values())
 
@@ -624,12 +624,6 @@ def designGraph(yearCountList, PEDataRet, PEDataRand, EDataRet, EDataRand, PPDat
         sfGraph = ScrolledFrame(newWindow)
         sfGraph.pack(fill=tk.BOTH, expand=tk.YES, padx=10, pady=10)
 
-        # Create a frame to hold the graphs within the scrolled frame
-        # frameGraph = tk.Frame(sfGraph)
-        # frameGraph.pack(fill=tk.BOTH, expand=tk.YES, padx=10, pady=10)
-
-        # Create and embed the first graph
-          # Create and embed the first graph with two lines
        # Calculate the total number of years
         num_years = len(yearCountList)
 
