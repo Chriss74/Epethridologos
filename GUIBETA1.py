@@ -362,8 +362,8 @@ def confirmCountRank(parent):
     chose_countrank_PE.config(state="readonly")
     chose_countrank_E.config(state="readonly")
     chose_countrank_PP.config(state="readonly")
-    # year_slider.config(state="disabled") mporei na htan kakh idea pou to evgala...
-    file_year_slider.config(stat="disabled")
+    # year_slider.config(state="disabled")
+    file_year_slider.config(state="disabled")
     entry_widgets = list(parent.children.values())
 
     c=0
@@ -555,7 +555,8 @@ def openNewWindowKsou():
         newWindow.grab_set()
     else:
         Messagebox.ok("Πρέπει να συμπληρώσετε πρώτα όλα τα αρχικά πεδία για το πλήθος των αποχωρήσεων σε κάθε βαθμό")
-
+    
+    
     
 def openNewWindowAge():
     if agelimit[0] and agelimit[1] and agelimit[2] and agelimit[3]:
@@ -793,8 +794,7 @@ def confirmKsou(parent):
         en4=tb.Entry(sfKsou)
         en4.pack()
         en4.bind('<Control-v>', lambda _:'break')
-
-    newWindowKsou.grab_set()
+    
 
 #MAIN DEFS
 def loop(firstlist, year, ksoucount, age, name, rank):
@@ -803,18 +803,19 @@ def loop(firstlist, year, ksoucount, age, name, rank):
     ksou_onomata=[] #onomata
     retirementCount=0
     randomCount=0
-    retirement=False #spaei to loop sto enter
-    nameIndex=None
+    
  
     for index, x in enumerate(firstlist):
         if year-x[1]<age:
             temp.append(x)           
         else:
-            x.append(year-x[1])
-            x.append(year)
-            x.append(rank)
-            x.append("'Οριο Ηλικίας")
-            ksou_onomata.append(x)
+            k=[]
+            k+=x
+            k.append(year-x[1])
+            k.append(year)
+            k.append(rank)
+            k.append("Οριο Ηλικίας")
+            ksou_onomata.append(k)
             retirementCount+=1
     #Meta tha elegxw thn ksoulist gia to onoma
     index=None
@@ -834,7 +835,8 @@ def loop(firstlist, year, ksoucount, age, name, rank):
                 lottery=random.sample(range(0, len(temp)), ksoucount)
         
         for y in lottery:
-            unlucky=temp[y]
+            unlucky=[]
+            unlucky+=temp[y]
             unlucky.append(year-x[1])
             unlucky.append(year)
             unlucky.append(rank)
@@ -911,10 +913,10 @@ def fill_plhrofories(textIndex,yearEnd, indexInRank, rankIndex, yearCountList, P
     [button.destroy() for button in mainFrame4.winfo_children() if isinstance(button, ttk.Button)]
     infoLabel.config(text="")
     FMIRankReached=f'Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Προαγωγή στο βαθμό "{myrank}" σε {yearEnd-cyear} έτη από το έτος της επετηρίδας δηλαδή το έτος {yearEnd}.\nΣειρά στον βαθμό: {indexInRank+1} \nHλικία: {yearEnd-name[1]}'
-    FMSyntaksi=f"Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Συνταξιοδότησης σε {yearEnd-cyear} έτη από το έτος της επετηρίδας, δηλαδή το έτος {yearEnd} Βαθμός: {ranks[rankIndex]} \nΗλικία {yearEnd-name[1]}"
-    FMEinaiHdh=f'Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Στην επετηρίδα του έτους {yearEnd} είχε ήδη τον βαθμό "{myrank}" και σειρά στο βαθμό {indexInRank+1} σύμφωνα με τα στοιχεία που δώσατε'
+    FMSyntaksi=f"Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Συνταξιοδότηση σε {yearEnd-cyear} έτη από το έτος της επετηρίδας, δηλαδή το έτος {yearEnd} Βαθμός: {ranks[rankIndex]} \nΗλικία {yearEnd-name[1]}"
+    FMEinaiHdh=f'Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Στην επετηρίδα του έτους {yearEnd} είχε ήδη τον βαθμό "{ranks[rankIndex]}" και σειρά στο βαθμό {indexInRank+1} σύμφωνα με τα στοιχεία που δώσατε'
     FMNoName=f'Ετος: {yearEnd} \n'
-    FMName=f'Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Σε {yearEnd-cyear} έτη από το έτος της επετηρίδας {cyear} και σε ηλικία {yearEnd-name[1]} είχε τον βαθμό "{myrank}" και σειρά στον βαθμό αυτό {indexInRank+1}'
+    FMName=f'Δικαστής: {name[0]}\nΈτος Γέννησης: {name[1]}\n Σε {yearEnd-cyear} έτη από το έτος της επετηρίδας {cyear} δηλαδή το έτος {yearEnd} και σε ηλικία {yearEnd-name[1]} έχει τον βαθμό "{ranks[rankIndex]}" και σειρά στον βαθμό αυτό {indexInRank+1}'
     Error="Error"
     arr=[FMIRankReached, FMSyntaksi, FMEinaiHdh, FMNoName, FMName, Error]
     infoLabel.config(text=arr[textIndex])   
@@ -946,7 +948,7 @@ def enter():
     PList=data_array[pe+e+pp:]
     ksou_onomata_all=[]
     indexInRank=-1
-    indexRank=None
+    indexRank=-1
     yearsKsouCountList=[]
     PERetCountList=[]
     PERandCountList=[]
@@ -978,7 +980,7 @@ def enter():
     element2=ksouList[-3]
     element3=ksouList[-2]
     element4=ksouList[-1]
-    while len(agelimit)<years*5:
+    while len(ksouList)<years*5:
         ksouList.append(element1)
         ksouList.append(element2)
         ksouList.append(element3)
@@ -1145,7 +1147,7 @@ def enter():
                 PRetCountList=[]
                 PRandCountList=[]
                 indexInRank=-1
-                indexRank=None
+                indexRank=-1
                 return
             elif any(sublist[:2] == name for sublist in EListAll[2]):
                 add_content_to_tab(0, PEList)
@@ -1211,7 +1213,7 @@ def enter():
                 PRetCountList=[]
                 PRandCountList=[]
                 indexInRank=-1
-                indexRank=None
+                indexRank=-1
                 return
             
                 
@@ -1249,7 +1251,7 @@ def enter():
                 PRetCountList=[]
                 PRandCountList=[]
                 indexInRank=-1
-                indexRank=None
+                indexRank=-1
                 return
             if myrank==2 and name in EList:
                 
@@ -1272,7 +1274,7 @@ def enter():
                 PRetCountList=[]
                 PRandCountList=[]
                 indexInRank=-1
-                indexRank=None
+                indexRank=-1
                 return
             if myrank==3 and name in PPList:
                
@@ -1295,7 +1297,7 @@ def enter():
                 PRetCountList=[]
                 PRandCountList=[]
                 indexInRank=-1
-                indexRank=None
+                indexRank=-1
                 return
                       
 
@@ -1307,12 +1309,14 @@ def enter():
     add_content_to_tab(3, PList)
     add_content_to_ksou(4, ksou_onomata_all)
     
-    
+
 #Telikos elegxos 
     if name in PEList:
+        print("successPE")
         indexInRank = next((i for i, sublist in enumerate(PEList) if sublist == name), None)
-        fill_plhrofories(4, cyear+i,indexInRank,1, yearsKsouCountList, PERetCountList, PERandCountList, ERetCountList, ERandCountList,PPRetCountList, PPRandCountList)
+        indexRank=1
     elif name in EList:
+        print("success")
         indexInRank = next((i for i, sublist in enumerate(EList) if sublist == name), None)
         indexRank=2
     elif name in PPList:
@@ -1321,9 +1325,10 @@ def enter():
     elif name in PList:
         indexInRank = next((i for i, sublist in enumerate(PList) if sublist == name), None)
         indexRank=4
-    if indexRank and indexInRank>-1:
+    if indexRank>-1 and indexInRank>-1:
         fill_plhrofories(4,cyear+i,indexInRank,indexRank, yearsKsouCountList, PERetCountList, PERandCountList, ERetCountList, ERandCountList,PPRetCountList, PPRandCountList)
     else:
+        print(indexInRank, indexRank)
         fill_plhrofories(3,cyear+i,0,0,yearsKsouCountList, PERetCountList,PERandCountList, ERetCountList, ERandCountList,PPRetCountList, PPRandCountList)
     
 #arxikopoihsh metavlhtwn, kalou kakou
@@ -1339,7 +1344,7 @@ def enter():
     PRetCountList=[]
     PRandCountList=[]
     indexInRank=-1
-    indexRank=None
+    indexRank=-1
     
 
        
